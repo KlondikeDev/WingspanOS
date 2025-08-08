@@ -14,7 +14,7 @@ _start:
     mov bx, 0x1000
 
     mov ah, 2
-    mov al, 4      ; Load 4 sectors (2048 bytes) instead of 1
+    mov al, 20
     mov ch, 0
     mov cl, 2
     mov dh, 0
@@ -56,8 +56,6 @@ protected_mode_start:
     mov gs, ax
 
     mov esp, 0x90000   
-
-    mov dword [0xB8000], 0x07410741  ; Write "AA" in white on black
     
     jmp 0x1000
     

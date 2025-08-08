@@ -125,9 +125,9 @@ void idt_init(void) {
     
     kprint("Loading IDT...\n");
     idt_install();
-    //irq_install();
+    irq_install();
     kprint("IDT loaded successfully!\n");
-    //__asm__ volatile ("sti");
+    __asm__ volatile ("sti");
 }
 
 // Load IDT using assembly
@@ -139,16 +139,55 @@ void idt_install(void) {
 void isr_handler(registers_t* regs) {
     switch(regs->int_no) {
         case 0:
-            kprint_isr("KERNEL PANIC: DIVIDE BY ZERO\n");
+            kprint_isr("KERNEL PANIC: DIVIDE BY ZERO. STOP.\n");
+            break;
+        case 1:
+            kprint_isr("KERNEL PANIC: DEBUG EXCEPTION. STOP.\n");
+            break;
+        case 2:
+            kprint_isr("KERNEL PANIC: NON-MASKABLE INTERRUPT. STOP.\n");
+            break;
+        case 3:
+            kprint_isr("KERNEL PANIC: BREAKPOINT EXCEPTION. STOP.\n");
+            break;
+        case 4:
+            kprint_isr("KERNEL PANIC: OVERFLOW EXCEPTION. STOP.\n");
+            break;
+        case 5:
+            kprint_isr("KERNEL PANIC: BOUND RANGE EXCEEDED. STOP.\n");
+            break;
+        case 6:
+            kprint_isr("KERNEL PANIC: INVALID OPCODE. STOP.\n");
+            break;
+        case 7:
+            kprint_isr("KERNEL PANIC: DEVICE NOT AVAILABLE. STOP.\n");
+            break;
+        case 8:
+            kprint_isr("KERNEL PANIC: DOUBLE FAULT. STOP.\n");
+            break;
+        case 9:
+            kprint_isr("KERNEL PANIC: COPROCESSOR SEGMENT OVERRUN. STOP.\n");
+            break;
+        case 10:
+            kprint_isr("KERNEL PANIC: INVALID TSS. STOP.\n");
+            break;
+        case 11:
+            kprint_isr("KERNEL PANIC: SEGMENT NOT PRESENT. STOP.\n");
+            break;
+        case 12:
+            kprint_isr("KERNEL PANIC: STACK FAULT. STOP.\n");
             break;
         case 13:
-            kprint_isr("KERNEL PANIC: GENERAL PROTECTION FAULT\n");
+            kprint_isr("KERNEL PANIC: GENERAL PROTECTION FAULT. STOP.\n");
             break;
         case 14:
-            kprint_isr("KERNEL PANIC: PAGE FAULT\n");
+            kprint_isr("KERNEL PANIC: PAGE FAULT. STOP.\n");
+            break;
+        case 16:
+            kprint_isr("KERNEL PANIC: FLOATING POINT EXCEPTION. STOP.\n");
             break;
         default:
-            kprint_isr("KERNEL PANIC: UNKNOWN ERROR\n");
+            kprint_isr("KERNEL PANIC: UNKNOWN ERROR. STOP.\n");
             break;
     }
     
@@ -165,7 +204,6 @@ void irq_ack(u8 irq) {
 void irq_handler(registers_t* regs) {
     switch(regs->int_no) {
         case 32:  // Timer
-            kprint("Timer tick!\n");
             break;
         case 33:  // Keyboard
             kprint("Key pressed!\n");
