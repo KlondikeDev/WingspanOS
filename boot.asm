@@ -1,6 +1,8 @@
 [ORG 0x7C00]
 [BITS 16]
 
+extern kmain
+
 _start:
     xor ax, ax
     mov es, ax
@@ -25,7 +27,10 @@ protected_mode_start:
     mov es, ax
     mov fs, ax
     mov gs, ax
+
+    mov esp, 0x90000   
     
+    call kmain
     jmp $
 
 gdt_start:
