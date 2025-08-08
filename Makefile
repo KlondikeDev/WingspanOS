@@ -3,12 +3,15 @@
 
 BOOT_ASM = boot.asm
 KERNEL_C = kernel.c
+VGA_C = vga.c
+IDT_C = idt.c
+ISR_ASM = isr.asm
 LINKER_SCRIPT = linker.ld
 
 BOOT_BIN = boot.bin
 KERNEL_BIN = kernel.bin
 OS_IMAGE = os.img
-VM_NAME = myOS
+VM_NAME = Kunix
 BOOT_IMG = boot.img
 
 # Tools
@@ -19,7 +22,7 @@ DD = dd
 VBOXMANAGE = VBoxManage
 
 # Flags
-CFLAGS = -m32 -ffreestanding -fno-builtin -fno-stack-protector -nostdlib -Wall -Wextra -c
+CFLAGS = -m32 -ffreestanding -fno-builtin -fno-stack-protector -nostdlib -fno-pic -fno-pie -Wall -Wextra -c
 LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT) --oformat binary
 
 all: $(OS_IMAGE)
@@ -32,9 +35,21 @@ $(BOOT_BIN): $(BOOT_ASM)
 kernel.o: $(KERNEL_C)
 	$(GCC) $(CFLAGS) $(KERNEL_C) -o kernel.o
 
+# Compile vga
+vga.o: $(VGA_C)
+	$(GCC) $(CFLAGS) $(VGA_C) -o vga.o
+
+# Compile idt
+idt.o: $(IDT_C)
+	$(GCC) $(CFLAGS) $(IDT_C) -o idt.o
+
+# Assemble isr
+isr.o: $(ISR_ASM)
+	$(NASM) -f elf32 $(ISR_ASM) -o isr.o
+
 # Link kernel
-$(KERNEL_BIN): kernel.o $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) kernel.o -o $(KERNEL_BIN)
+$(KERNEL_BIN): kernel.o vga.o idt.o isr.o $(LINKER_SCRIPT)
+	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o -o $(KERNEL_BIN)
 
 # Create OS image (bootloader + kernel)
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)

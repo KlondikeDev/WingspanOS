@@ -1,14 +1,25 @@
 [ORG 0x7C00]
 [BITS 16]
 
-extern kmain
-
 _start:
     xor ax, ax
     mov es, ax
     mov ds, ax
     mov ss, ax
     mov sp, 0x7C00
+
+
+    mov ax, 0      ; Set ES first
+    mov es, ax
+    mov bx, 0x1000
+
+    mov ah, 2
+    mov al, 4      ; Load 4 sectors (2048 bytes) instead of 1
+    mov ch, 0
+    mov cl, 2
+    mov dh, 0
+    int 0x13
+    jc disk_error    ; Jump if carry flag set (error)
     
     cli
     lgdt [gdt_descriptor]
@@ -18,6 +29,22 @@ _start:
     mov cr0, eax
     
     jmp CODE_SEG:protected_mode_start
+
+
+disk_error:
+    mov si, disk_error_msg
+    call print_string
+    jmp $
+print_string:
+    mov ah, 0x0E
+.next_char:
+    lodsb
+    cmp al, 0
+    je .done
+    int 0x10
+    jmp .next_char
+.done:
+    ret
 
 [BITS 32]
 protected_mode_start:
@@ -29,9 +56,12 @@ protected_mode_start:
     mov gs, ax
 
     mov esp, 0x90000   
+
+    mov dword [0xB8000], 0x07410741  ; Write "AA" in white on black
     
-    call kmain
-    jmp $
+    jmp 0x1000
+    
+    jmp 0x1000
 
 gdt_start:
     dd 0x0
@@ -61,6 +91,8 @@ gdt_descriptor:
 
 CODE_SEG equ gdt_code - gdt_start
 DATA_SEG equ gdt_data - gdt_start
+
+disk_error_msg db 'ERROR: FAILED TO READ DISK.', 0
 
 TIMES 510-($-$$) db 0
 dw 0xAA55

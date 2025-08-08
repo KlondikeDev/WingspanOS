@@ -1,4 +1,4 @@
-ENTRY(kernel_main)
+ENTRY(kmain)
 
 SECTIONS
 {
@@ -8,11 +8,16 @@ SECTIONS
         *(.text)
     }
     
+    .rodata : {
+        *(.rodata)
+    }
+    
     .data : {
         *(.data)
     }
     
     .bss : {
+        *(COMMON)
         *(.bss)
     }
 }

@@ -18,28 +18,8 @@ typedef enum {
     VGA_WHITE = 15
 } vga_color_t;
 
-
 #define VGA_COLOR(bg, fg) ((bg << 4) | fg)
 
-u16* VGA_MEMORY = (u16*) (0xB8000);
-u16 cursorPos = 0;
-void kprint(const char* str){  
-    for(u32 i = 0; str[i] != '\0'; i++){
-        if(str[i] == '\n'){
-            cursorPos = (cursorPos / 80 + 1) * 80;
-        } else{
-            VGA_MEMORY[cursorPos] = (str[i]) | (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8);
-            cursorPos++;
-        }
-
-        if(cursorPos >= 80 * 25)
-            cursorPos = 0;
-    }
-}
-
-void klear(){
-    for(u32 i = 0; i < 80 * 25; i++){
-        VGA_MEMORY[i] = (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8) | ' ';
-    }
-    cursorPos = 0;
-} 
+void kprint(const char* str);
+void klear(void);
+void kprint_isr(const char* str);
