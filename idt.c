@@ -206,7 +206,7 @@ void irq_handler(registers_t* regs) {
         case 32:  // Timer
             break;
         case 33:  // Keyboard
-            kprint("Key pressed!\n");
+            read_key_from_port();
             break;
         default:
             kprint("Unknown IRQ!\n");

@@ -1,20 +1,49 @@
 #include "types.h"
 #include "vga.h"
+#include "idt.h"
+u16 row = 0, col = 0;
+
+void scroll_screen() {
+    u16* VGA_MEMORY = (u16*) (0xB8000);
+    
+    // Move each line up by one
+    for(int line = 0; line < 24; line++) {
+        for(int col = 0; col < 80; col++) {
+            VGA_MEMORY[line * 80 + col] = VGA_MEMORY[(line + 1) * 80 + col];
+        }
+    }
+    
+    // Clear the bottom line
+    for(int col = 0; col < 80; col++) {
+        VGA_MEMORY[24 * 80 + col] = (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8) | ' ';
+    }
+}
 
 void kprint(const char* str){
     u16* VGA_MEMORY = (u16*) (0xB8000);
-    static u16 cursorPos = 3;  // Start after AB from bootloader
     
     for(u32 i = 0; str[i] != '\0'; i++){
         if(str[i] == '\n'){
-            cursorPos = (cursorPos / 80 + 1) * 80;
+            row++;
+            col = 0;
+            void update_cursor(u16 row, u16 col);
         } else{
-            VGA_MEMORY[cursorPos] = (str[i]) | (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8);
-            cursorPos++;
+            VGA_MEMORY[row * 80 + col] = (str[i]) | (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8);
+            col++;
+            if(col >= 80) {  // Wrap to next line
+                row++;
+                col = 0;
+                void update_cursor(u16 row, u16 col);
+            }
         }
 
-        if(cursorPos >= 80 * 25)
-            cursorPos = 0;
+        if(row >= 25) {
+            // Time to scroll!
+            scroll_screen();
+            row = 24;  // Move to last line
+            col = 0;
+            void update_cursor(u16 row, u16 col);
+        }
     }
 }
 void klear(){
@@ -39,4 +68,15 @@ void kprint_isr(const char* str) {
         if(isr_cursor >= 80 * 25)
             isr_cursor = 80 * 10;  // Wrap back to line 10
     }
+}
+
+// Add to vga.c  
+void kprint_hex(u8 value) {
+    char buffer[5] = "0x00";
+    char hex_chars[] = "0123456789ABCDEF";
+    
+    buffer[2] = hex_chars[(value >> 4) & 0xF];  // Upper 4 bits
+    buffer[3] = hex_chars[value & 0xF];         // Lower 4 bits
+    
+    kprint(buffer);
 }

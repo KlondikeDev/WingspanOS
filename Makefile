@@ -5,6 +5,7 @@ BOOT_ASM = boot.asm
 KERNEL_C = kernel.c
 VGA_C = vga.c
 IDT_C = idt.c
+KEYBOARD_C = keyboard.c
 ISR_ASM = isr.asm
 LINKER_SCRIPT = linker.ld
 
@@ -47,9 +48,12 @@ idt.o: $(IDT_C)
 isr.o: $(ISR_ASM)
 	$(NASM) -f elf32 $(ISR_ASM) -o isr.o
 
+keyboard.o: $(KEYBOARD_C)
+	$(GCC) $(CFLAGS) $(KEYBOARD_C) -o keyboard.o
+
 # Link kernel
-$(KERNEL_BIN): kernel.o vga.o idt.o isr.o $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o -o $(KERNEL_BIN)
+$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o $(LINKER_SCRIPT)
+	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o -o $(KERNEL_BIN)
 
 # Create OS image (bootloader + kernel)
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)

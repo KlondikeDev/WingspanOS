@@ -50,3 +50,5 @@ void irq_handler(registers_t* regs);
 // PIC functions
 void irq_remap(void);
 void irq_install(void);
+
+void read_key_from_port(void);

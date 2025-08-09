@@ -23,3 +23,9 @@ typedef enum {
 void kprint(const char* str);
 void klear(void);
 void kprint_isr(const char* str);
+void kprint_hex(u8 value);
+extern u16 row;
+extern u16 col;
+extern u16 input_start_row;
+extern u16 input_start_col;
+void update_cursor(u16 row, u16 col);
