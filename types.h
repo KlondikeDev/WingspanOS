@@ -26,7 +26,7 @@ typedef unsigned int        uint;
 #define PACKED __attribute__((__packed__))
 #define typeof __typeof__
 
-#define bool _Bool
+typedef u8 bool;
 #define true 1
 #define false 0
 

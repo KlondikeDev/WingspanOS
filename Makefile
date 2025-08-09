@@ -7,6 +7,7 @@ VGA_C = vga.c
 IDT_C = idt.c
 KEYBOARD_C = keyboard.c
 ISR_ASM = isr.asm
+KUTILS_C = kutils.c
 LINKER_SCRIPT = linker.ld
 
 BOOT_BIN = boot.bin
@@ -51,9 +52,12 @@ isr.o: $(ISR_ASM)
 keyboard.o: $(KEYBOARD_C)
 	$(GCC) $(CFLAGS) $(KEYBOARD_C) -o keyboard.o
 
+kutils.o: $(KUTILS_C)
+	$(GCC) $(CFLAGS) $(KEYBOARD_C) -o kutils.o
+
 # Link kernel
-$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o -o $(KERNEL_BIN)
+$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o $(LINKER_SCRIPT)
+	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o -o $(KERNEL_BIN)
 
 # Create OS image (bootloader + kernel)
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)

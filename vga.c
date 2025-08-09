@@ -44,6 +44,7 @@ void kprint(const char* str){
             col = 0;
             update_cursor(row, col);
         }
+        update_cursor(row, col);  // <-- ADD THIS
     }
 }
 void klear(){

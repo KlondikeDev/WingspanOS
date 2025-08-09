@@ -105,6 +105,8 @@ void handle_backspace(void){
     if(row < input_start_row || (row == input_start_row && col <= input_start_col)) {
         return;
     }
+
+    input_pos--;
     
     if(col > 0) {
         col--;
@@ -133,13 +135,12 @@ void read_key_from_port(void) {
             handle_backspace();
             update_cursor(row, col);
         } else if (scancode == 0x1C) { // Enter key
-            kprint("\nkunix-$ ");
+            kprint("\n");
             update_cursor(row, col);
             input_start_row = row;
             input_start_col = col;
             input_buffer[input_pos] = '\0'; // Null terminate
             line_completed(); // Tell kernel line is ready
-            input_pos = 0; // Reset for next line
         } else {
             if (shiftDown == false) {
                 char key = kbdus[scancode];
