@@ -5,6 +5,12 @@
 bool shiftDown = false;
 
 
+extern u32 input_pos;
+extern void line_completed();
+extern char input_buffer[];  // Remove the = 0 initialization
+extern u32 input_pos;        // Remove the = 0 initialization  
+extern bool line_ready;      // Remove the = false initialization
+
 char kbdus[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8', /* 9 */
     '9', '0', '-', '=', '\b',   /* Backspace */
@@ -125,30 +131,34 @@ void read_key_from_port(void) {
     else if (!(scancode & 0x80)) {
         if (scancode == 0x0E) {
             handle_backspace();
-            void update_cursor(u16 row, u16 col);
-        } else if (scancode == 0x1C) {  // Enter key
+            update_cursor(row, col);
+        } else if (scancode == 0x1C) { // Enter key
             kprint("\nkunix-$ ");
-            void update_cursor(u16 row, u16 col);
+            update_cursor(row, col);
             input_start_row = row;
             input_start_col = col;
+            input_buffer[input_pos] = '\0'; // Null terminate
+            line_completed(); // Tell kernel line is ready
+            input_pos = 0; // Reset for next line
         } else {
             if (shiftDown == false) {
                 char key = kbdus[scancode];
-                if (key != 0) {
-                    char str[2] = { key, '\0' };
-                    kprint(str);
+                if (key != 0 && input_pos < 255) {  // ADD BOUNDS CHECK HERE
+                    input_buffer[input_pos++] = key;
+                    char str[2] = {key, '\0'};
+                    kprint(str); // Still echo to screen
                 }
             } else {
                 char key = kbdusShifted[scancode];
-                if (key != 0) {
-                    char str[2] = { key, '\0' };
-                    kprint(str);
+                if (key != 0 && input_pos < 255) {  // ADD BOUNDS CHECK HERE
+                    input_buffer[input_pos++] = key;
+                    char str[2] = {key, '\0'};
+                    kprint(str); // Still echo to screen
                 }
             }
         }
     }
 }
-
 void update_cursor(u16 row, u16 col) {
     u16 pos = row * 80 + col;
     

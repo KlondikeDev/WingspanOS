@@ -26,14 +26,14 @@ void kprint(const char* str){
         if(str[i] == '\n'){
             row++;
             col = 0;
-            void update_cursor(u16 row, u16 col);
+            update_cursor(row, col);
         } else{
             VGA_MEMORY[row * 80 + col] = (str[i]) | (VGA_COLOR(VGA_BLACK, VGA_WHITE) << 8);
             col++;
             if(col >= 80) {  // Wrap to next line
                 row++;
                 col = 0;
-                void update_cursor(u16 row, u16 col);
+                update_cursor(row, col);
             }
         }
 
@@ -42,7 +42,7 @@ void kprint(const char* str){
             scroll_screen();
             row = 24;  // Move to last line
             col = 0;
-            void update_cursor(u16 row, u16 col);
+            update_cursor(row, col);
         }
     }
 }
