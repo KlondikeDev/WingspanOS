@@ -31,6 +31,5 @@ extern u16 col;
 extern u16 input_start_row;
 extern u16 input_start_col;
 void update_cursor(u16 row, u16 col);
-void kprint_dec(u8 value);
-
+void kprint_dec(u32 num);
 #endif

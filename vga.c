@@ -82,11 +82,23 @@ void kprint_hex(u8 value) {
     kprint(buffer);
 }
 
-void kprint_dec(u8 value) {
-    if (value >= 10) {
-        kprint_dec(value / 10);
+void kprint_dec(u32 num) {
+    char buffer[12];  // Enough for 32-bit number
+    int i = 0;
+    
+    if(num == 0) {
+        kprint("0");
+        return;
     }
-    char digit = (value % 10) + '0';
-    char str[2] = {digit, '\0'};
-    kprint(str);
+    
+    while(num > 0) {
+        buffer[i++] = '0' + (num % 10);
+        num /= 10;
+    }
+    
+    // Print in reverse
+    while(--i >= 0) {
+        char str[2] = {buffer[i], '\0'};
+        kprint(str);
+    }
 }

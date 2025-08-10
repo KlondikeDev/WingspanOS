@@ -3,6 +3,7 @@
 #include "idt.h"
 #include "kutils.h"
 #include "music.h"
+#include "ata.h"
 
 // Input handling
 u16 input_start_row = 0;
@@ -21,18 +22,20 @@ void kmain() {
     kprint("Initializing IDT...\n");
     idt_init();
     kprint("\nIDT initialized successfully!\n");
+
+    kprint("Detecting disks...\n");
+    detect_drives();
+
     kprint("Hello from kMain!\n");
     kprint("Copyright (C) Joseph Jones // Klondike Software\n");
 
     kprint("kunix-$ ");
-
-    i32 foo = 1/0;
     update_cursor(row, col);
     input_start_row = row;
     input_start_col = col;
 
     while (1) {
-        if (line_ready == true) {
+        if (line_ready) {
             static char command[256];
             for (u32 i = 0; i < input_pos; i++) {
                 command[i] = input_buffer[i];
@@ -43,7 +46,12 @@ void kmain() {
 
             // Commands
             if (str_equals(command, "help")) {
-                kprint("Available commands: help, wash, about, reboot, echo, play, rtc\n");
+                kprint("Available commands:\n");
+                kprint("| UTILITIES:\n");
+                kprint("| GENERAL:    help, wash, about, reboot, rtc\n");
+                kprint("| FILESYSTEM: drives, format, diskinfo\n");
+                kprint("|_\n");
+                kprint("MISC: echo, play\n");
             }
             else if (str_equals(command, "wash")) {
                 klear();
@@ -105,6 +113,17 @@ void kmain() {
             }
             else if (str_equals(command, "rtc")) {
                 kprint("Usage: rtc [seconds|time|date]\n");
+            }
+            else if (str_equals(command, "drives")) {
+                detect_drives();
+            }
+            else if (str_equals(command, "format")) {
+                kprint("Formatting drive with KLFS...\n");
+                klfs_format();
+            }
+            else if (str_equals(command, "diskinfo")) {
+                kprint("Identifying primary master drive...\n");
+                identify_drive(0xA0);
             }
             else {
                 kprint("Syntax Error. 1\n");

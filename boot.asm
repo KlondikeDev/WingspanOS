@@ -14,7 +14,7 @@ _start:
     mov bx, 0x1000
 
     mov ah, 2
-    mov al, 20
+    mov al, 25
     mov ch, 0
     mov cl, 2
     mov dh, 0

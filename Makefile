@@ -16,6 +16,8 @@ KERNEL_BIN = kernel.bin
 OS_IMAGE = os.img
 VM_NAME = Kunix
 BOOT_IMG = boot.img
+DISK_SIZE = 100
+DISK_IMAGE = kunix_disk.vdi
 
 # Tools
 NASM = nasm
@@ -59,9 +61,12 @@ kutils.o: $(KUTILS_C)
 music.o: $(MUSIC_C)
 	$(GCC) $(CFLAGS) $(MUSIC_C) -o music.o
 
+ata.o: ata.c
+	$(GCC) $(CFLAGS) ata.c -o ata.o
+
 # Link kernel
-$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o -o $(KERNEL_BIN)
+$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o $(LINKER_SCRIPT)
+	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o -o $(KERNEL_BIN)
 
 # Create OS image (bootloader + kernel)
 $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
@@ -69,13 +74,26 @@ $(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	$(DD) if=$(BOOT_BIN) of=$(OS_IMAGE) conv=notrunc
 	$(DD) if=$(KERNEL_BIN) of=$(OS_IMAGE) bs=512 seek=1 conv=notrunc
 
-# VirtualBox setup
+# VirtualBox setup with hard disk
+# VirtualBox setup with hard disk
 setup-vm: $(OS_IMAGE)
 	$(VBOXMANAGE) list vms | grep -q "$(VM_NAME)" || ( \
 		$(VBOXMANAGE) createvm --name $(VM_NAME) --register && \
-		$(VBOXMANAGE) modifyvm $(VM_NAME) --memory 512 --boot1 floppy && \
-		$(VBOXMANAGE) storagectl $(VM_NAME) --name "Floppy Controller" --add floppy )
-	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "Floppy Controller" --port 0 --device 0 --type fdd --medium $(shell pwd)/$(OS_IMAGE)
+		$(VBOXMANAGE) modifyvm $(VM_NAME) --memory 512 --boot1 floppy )
+	
+	# Check if controllers exist, create if not
+	$(VBOXMANAGE) showvminfo $(VM_NAME) | grep -q "Floppy Controller" || \
+		$(VBOXMANAGE) storagectl $(VM_NAME) --name "Floppy Controller" --add floppy
+	
+	$(VBOXMANAGE) showvminfo $(VM_NAME) | grep -q "IDE Controller" || \
+		$(VBOXMANAGE) storagectl $(VM_NAME) --name "IDE Controller" --add ide
+	
+	# Create hard disk if it doesn't exist
+	[ -f $(DISK_IMAGE) ] || $(VBOXMANAGE) createmedium disk --filename $(shell pwd)/$(DISK_IMAGE) --size $(DISK_SIZE)
+	
+	# Attach storage devices
+	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "Floppy Controller" --port 0 --device 0 --type fdd --medium $(shell pwd)/$(OS_IMAGE) 2>/dev/null || true
+	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium $(shell pwd)/$(DISK_IMAGE) 2>/dev/null || true
 
 # Run in VirtualBox
 run: setup-vm
@@ -85,11 +103,12 @@ run: setup-vm
 clean:
 	rm -f $(BOOT_BIN) $(KERNEL_BIN) $(OS_IMAGE) $(BOOT_IMG) *.o
 
-# Clean VM
+# Clean VM and disk
 clean-vm:
 	$(VBOXMANAGE) list vms | grep -q "$(VM_NAME)" && ( \
 		$(VBOXMANAGE) controlvm $(VM_NAME) poweroff 2>/dev/null || true && \
 		sleep 2 && \
 		$(VBOXMANAGE) unregistervm $(VM_NAME) --delete ) || true
+	rm -f $(DISK_IMAGE)
 
 .PHONY: all run clean clean-vm setup-vm
