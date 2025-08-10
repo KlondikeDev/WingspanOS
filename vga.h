@@ -1,3 +1,5 @@
+#ifndef VGA_H
+#define VGA_H
 #include "types.h"
 typedef enum {
     VGA_BLACK = 0,
@@ -29,3 +31,6 @@ extern u16 col;
 extern u16 input_start_row;
 extern u16 input_start_col;
 void update_cursor(u16 row, u16 col);
+void kprint_dec(u8 value);
+
+#endif

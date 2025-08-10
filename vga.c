@@ -81,3 +81,12 @@ void kprint_hex(u8 value) {
     
     kprint(buffer);
 }
+
+void kprint_dec(u8 value) {
+    if (value >= 10) {
+        kprint_dec(value / 10);
+    }
+    char digit = (value % 10) + '0';
+    char str[2] = {digit, '\0'};
+    kprint(str);
+}

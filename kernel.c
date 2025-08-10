@@ -2,6 +2,7 @@
 #include "vga.h"
 #include "idt.h"
 #include "kutils.h"
+#include "music.h"
 
 // Input handling
 u16 input_start_row = 0;
@@ -24,6 +25,8 @@ void kmain() {
     kprint("Copyright (C) Joseph Jones // Klondike Software\n");
 
     kprint("kunix-$ ");
+
+    i32 foo = 1/0;
     update_cursor(row, col);
     input_start_row = row;
     input_start_col = col;

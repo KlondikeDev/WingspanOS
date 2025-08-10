@@ -17,5 +17,6 @@ u8 get_rtc_minutes();
 u8 get_rtc_hours();
 u8 get_rtc_day(); 
 u8 get_rtc_year();     
-u8 get_rtc_value(u8 reg);
-u8 bcd_to_binary(u8 value);
+u8 get_rtc_month();
+void outb(u16 port, u8 val);
+u8 inb(u16 port);

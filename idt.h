@@ -1,3 +1,15 @@
+/*
+    File: idt.h
+    Created on: August 8th 2025
+    Created by: jjones
+    Purpose: Header file for the Interrupt Descriptor Table.
+    Dependencies: types.h
+
+    Suggested Changes/Todo:
+    Nothing Yet.
+
+*/
+
 #pragma once
 #include "types.h"
 

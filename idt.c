@@ -1,6 +1,19 @@
+/*
+    File: idt.h
+    Created on: August 8th 2025
+    Created by: jjones
+    Purpose: Interrupt Descriptor Table.
+    Dependencies: types.h, idt.h, vga.h, kutils.h
+
+    Suggested Changes/Todo:
+    Nothing Yet.
+
+*/
+
 #include "types.h"
 #include "idt.h"
 #include "vga.h"
+#include "kutils.h"
 
 void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags);
 void idt_init(void);
@@ -25,17 +38,6 @@ void irq_handler(registers_t* regs);
 #define ICW4_BUF_SLAVE  0x08    // Buffered mode/slave
 #define ICW4_BUF_MASTER 0x0C    // Buffered mode/master
 #define ICW4_SFNM       0x10    // Special fully nested (not)
-
-// I/O port functions
-void outb(u16 port, u8 val) {
-    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
-}
-
-u8 inb(u16 port) {
-    u8 ret;
-    __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
-    return ret;
-}
 
 // Remap the PIC
 void irq_remap(void) {
