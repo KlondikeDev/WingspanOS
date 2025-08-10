@@ -19,11 +19,8 @@ bool str_equals(const char* str1, const char* str2);
 void kmain() {
     kprint("Kernel started!\n");
 
-    kprint("Initializing IDT...\n");
     idt_init();
-    kprint("\nIDT initialized successfully!\n");
 
-    kprint("Detecting disks...\n");
     detect_drives();
 
     kprint("Hello from kMain!\n");
@@ -49,7 +46,7 @@ void kmain() {
                 kprint("Available commands:\n");
                 kprint("| UTILITIES:\n");
                 kprint("| GENERAL:    help, wash, about, reboot, rtc\n");
-                kprint("| FILESYSTEM: drives, format, diskinfo\n");
+                kprint("| FILESYSTEM: drives, format, diskinfo, verify, ls, touch, cat, write, rm, cp, find\n");
                 kprint("|_\n");
                 kprint("MISC: echo, play\n");
             }
@@ -59,7 +56,7 @@ void kmain() {
                 col = 0;
             }
             else if (str_equals(command, "about")) {
-                kprint("Kunix v0.0.0\n");
+                kprint("Kunix v0.0.1-a\n");
             }
             else if (starts_with(command, "echo ")) {
                 kprint(command + 5);
@@ -124,8 +121,70 @@ void kmain() {
             else if (str_equals(command, "diskinfo")) {
                 kprint("Identifying primary master drive...\n");
                 identify_drive(0xA0);
+            } else if (str_equals(command, "verify")) {
+                klfs_verify();
+            } else if (str_equals(command, "ls")) {
+                klfs_list_files();
+            } else if (starts_with(command, "touch ")) {
+                const char* filename = command + 6;
+                klfs_create_file(filename);
+            } else if (str_equals(command, "touch")) {
+                kprint("Usage: touch <filename>\n");
+            }// Add this to your shell command parsing in kernel.c:
+
+            else if (starts_with(command, "write ")) {
+    // Format: write filename text
+            const char* args = command + 6;
+    
+    // Find first space (separates filename from text)
+            u32 space_pos = 0;
+            while(args[space_pos] && args[space_pos] != ' ') space_pos++;
+    
+            if(args[space_pos] == 0) {
+                kprint("Usage: write <filename> <text>\n");
+            } else {
+        // Extract filename
+                char filename[32] = {0};
+                for(u32 i = 0; i < space_pos && i < 31; i++) {
+                    filename[i] = args[i];
+                }
+        
+        // Text starts after the space
+                const char* text = args + space_pos + 1;
+                klfs_write_file(filename, text);
             }
-            else {
+            } else if (starts_with(command, "cat ")) {
+                const char* filename = command + 4;
+                klfs_read_file(filename);
+            }
+            else if (str_equals(command, "cat")) {
+                kprint("Usage: cat <filename>\n");
+            }
+            else if (starts_with(command, "rm ")) {
+                const char* filename = command + 3;
+                klfs_delete_file(filename);
+            }
+            else if (str_equals(command, "rm")) {
+            kprint("Usage: rm <filename>\n");
+            } else if (starts_with(command, "cp ")) {
+                const char* args = command + 3;
+                u32 space_pos = 0;
+                while(args[space_pos] && args[space_pos] != ' ') space_pos++;
+    
+                if(args[space_pos] == 0) {
+                    kprint("Usage: cp <source> <dest>\n");
+                } else {
+                    char source[32] = {0};
+                for(u32 i = 0; i < space_pos && i < 31; i++) {
+                    source[i] = args[i];
+                }
+                const char* dest = args + space_pos + 1;
+                klfs_copy_file(source, dest);
+            }
+            } else if (starts_with(command, "find ")) {
+                const char* pattern = command + 5;
+                klfs_find_file(pattern);
+            } else {
                 kprint("Syntax Error. 1\n");
             }
 

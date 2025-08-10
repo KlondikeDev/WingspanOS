@@ -1,3 +1,5 @@
 *.o
 *.vdi
 *.bin
+*.img
+*.iso

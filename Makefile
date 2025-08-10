@@ -93,7 +93,7 @@ setup-vm: $(OS_IMAGE)
 	
 	# Attach storage devices
 	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "Floppy Controller" --port 0 --device 0 --type fdd --medium $(shell pwd)/$(OS_IMAGE) 2>/dev/null || true
-	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium $(shell pwd)/$(DISK_IMAGE) 2>/dev/null || true
+	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium $(shell pwd)/$(DISK_IMAGE) 2>/dev/null || truey
 
 # Run in VirtualBox
 run: setup-vm

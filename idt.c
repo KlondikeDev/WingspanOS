@@ -94,17 +94,14 @@ void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags) {
 
 // Initialize the IDT
 void idt_init(void) {
-    kprint("Setting up IDT descriptor...\n");
     idt_desc.limit = (sizeof(idt_entry_t) * IDT_ENTRIES) - 1;
     idt_desc.base = (u32)&idt;
     
-    kprint("Clearing IDT...\n");
     // Clear the IDT
     for(int i = 0; i < IDT_ENTRIES; i++) {
         idt_set_gate(i, 0, 0, 0);
     }
 
-    kprint("Installing exception handlers...\n");
     
     // Install exception handlers
     idt_set_gate(0, (u32)isr0, CODE_SEG, IDT_INTERRUPT_GATE);   // Divide by zero
@@ -125,10 +122,8 @@ void idt_init(void) {
     idt_set_gate(15, (u32)isr15, CODE_SEG, IDT_INTERRUPT_GATE); // Reserved
     idt_set_gate(16, (u32)isr16, CODE_SEG, IDT_INTERRUPT_GATE); // Floating point exception
     
-    kprint("Loading IDT...\n");
     idt_install();
     irq_install();
-    kprint("IDT loaded successfully!\n");
     __asm__ volatile ("sti");
 }
 
