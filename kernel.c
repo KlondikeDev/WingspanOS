@@ -51,7 +51,7 @@ void kmain() {
                 col = 0;
             }
             else if (str_equals(command, "about")) {
-                kprint("Kunix v0.0.0-rcOne\n");
+                kprint("Kunix v0.0.0\n");
             }
             else if (starts_with(command, "echo ")) {
                 kprint(command + 5);
