@@ -1,7 +1,9 @@
-# Simple OS Makefile
+# Two-Stage Bootloader Makefile
 # NOTE: All indented lines MUST use TAB characters, not spaces!
 
-BOOT_ASM = boot.asm
+# Source files
+STAGE1_ASM = boot.asm
+STAGE2_ASM = stage2.asm
 KERNEL_C = kernel.c
 VGA_C = vga.c
 IDT_C = idt.c
@@ -9,15 +11,21 @@ KEYBOARD_C = keyboard.c
 ISR_ASM = isr.asm
 KUTILS_C = kutils.c
 MUSIC_C = music.c
+ATA_C = ata.c
 LINKER_SCRIPT = linker.ld
 
-BOOT_BIN = boot.bin
+# Output files
+STAGE1_BIN = stage1.bin
+STAGE2_BIN = stage2.bin
 KERNEL_BIN = kernel.bin
 OS_IMAGE = os.img
 VM_NAME = Kunix
-BOOT_IMG = boot.img
 DISK_SIZE = 100
 DISK_IMAGE = kunix_disk.vdi
+
+# Configuration
+STAGE2_SECTORS = 8
+KERNEL_SECTORS = 64  # Increased from 36 - adjust as needed
 
 # Tools
 NASM = nasm
@@ -32,23 +40,31 @@ LDFLAGS = -m elf_i386 -T $(LINKER_SCRIPT) --oformat binary
 
 all: $(OS_IMAGE)
 
-# Compile bootloader
-$(BOOT_BIN): $(BOOT_ASM)
-	$(NASM) -f bin $(BOOT_ASM) -o $(BOOT_BIN)
+# Stage 1 bootloader (512 bytes)
+$(STAGE1_BIN): $(STAGE1_ASM)
+	$(NASM) -f bin $(STAGE1_ASM) -o $(STAGE1_BIN)
 
-# Compile kernel
+# Stage 2 bootloader
+$(STAGE2_BIN): $(STAGE2_ASM)
+	$(NASM) -f bin $(STAGE2_ASM) -o $(STAGE2_BIN)
+	# Pad Stage 2 to exactly STAGE2_SECTORS * 512 bytes
+	@SIZE=$$(stat -c%s $(STAGE2_BIN) 2>/dev/null || stat -f%z $(STAGE2_BIN)); \
+	NEEDED=$$(($(STAGE2_SECTORS) * 512)); \
+	if [ $$SIZE -gt $$NEEDED ]; then \
+		echo "Error: Stage 2 is $$SIZE bytes, max is $$NEEDED"; exit 1; \
+	fi; \
+	$(DD) if=/dev/zero bs=1 count=$$(($$NEEDED - $$SIZE)) >> $(STAGE2_BIN) 2>/dev/null
+
+# Compile kernel objects
 kernel.o: $(KERNEL_C)
 	$(GCC) $(CFLAGS) $(KERNEL_C) -o kernel.o
 
-# Compile vga
 vga.o: $(VGA_C)
 	$(GCC) $(CFLAGS) $(VGA_C) -o vga.o
 
-# Compile idt
 idt.o: $(IDT_C)
 	$(GCC) $(CFLAGS) $(IDT_C) -o idt.o
 
-# Assemble isr
 isr.o: $(ISR_ASM)
 	$(NASM) -f elf32 $(ISR_ASM) -o isr.o
 
@@ -61,21 +77,33 @@ kutils.o: $(KUTILS_C)
 music.o: $(MUSIC_C)
 	$(GCC) $(CFLAGS) $(MUSIC_C) -o music.o
 
-ata.o: ata.c
-	$(GCC) $(CFLAGS) ata.c -o ata.o
+ata.o: $(ATA_C)
+	$(GCC) $(CFLAGS) $(ATA_C) -o ata.o
 
 # Link kernel
 $(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o $(LINKER_SCRIPT)
 	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o -o $(KERNEL_BIN)
 
-# Create OS image (bootloader + kernel)
-$(OS_IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
-	$(DD) if=/dev/zero of=$(OS_IMAGE) bs=1024 count=1440
-	$(DD) if=$(BOOT_BIN) of=$(OS_IMAGE) conv=notrunc
-	$(DD) if=$(KERNEL_BIN) of=$(OS_IMAGE) bs=512 seek=1 conv=notrunc
+# Create final OS image: Stage1 + Stage2 + Kernel
+$(OS_IMAGE): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
+	# Create empty image
+	$(DD) if=/dev/zero of=$(OS_IMAGE) bs=512 count=$$((1 + $(STAGE2_SECTORS) + $(KERNEL_SECTORS))) 2>/dev/null
+	
+	# Copy Stage 1 (sector 0)
+	$(DD) if=$(STAGE1_BIN) of=$(OS_IMAGE) bs=512 count=1 conv=notrunc 2>/dev/null
+	
+	# Copy Stage 2 (sectors 1 to STAGE2_SECTORS)
+	$(DD) if=$(STAGE2_BIN) of=$(OS_IMAGE) bs=512 seek=1 count=$(STAGE2_SECTORS) conv=notrunc 2>/dev/null
+	
+	# Copy Kernel (starts after Stage 2)
+	$(DD) if=$(KERNEL_BIN) of=$(OS_IMAGE) bs=512 seek=$$((1 + $(STAGE2_SECTORS))) conv=notrunc 2>/dev/null
+	
+	@echo "Image created:"
+	@echo "  Stage 1: Sector 0"
+	@echo "  Stage 2: Sectors 1-$(STAGE2_SECTORS)"
+	@echo "  Kernel:  Sectors $$(($(STAGE2_SECTORS) + 1)) onwards"
 
-# VirtualBox setup with hard disk
-# VirtualBox setup with hard disk
+# VirtualBox setup
 setup-vm: $(OS_IMAGE)
 	$(VBOXMANAGE) list vms | grep -q "$(VM_NAME)" || ( \
 		$(VBOXMANAGE) createvm --name $(VM_NAME) --register && \
@@ -93,15 +121,24 @@ setup-vm: $(OS_IMAGE)
 	
 	# Attach storage devices
 	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "Floppy Controller" --port 0 --device 0 --type fdd --medium $(shell pwd)/$(OS_IMAGE) 2>/dev/null || true
-	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium $(shell pwd)/$(DISK_IMAGE) 2>/dev/null || truey
+	$(VBOXMANAGE) storageattach $(VM_NAME) --storagectl "IDE Controller" --port 0 --device 0 --type hdd --medium $(shell pwd)/$(DISK_IMAGE) 2>/dev/null || true
 
 # Run in VirtualBox
 run: setup-vm
 	$(VBOXMANAGE) startvm $(VM_NAME)
 
+# Show disk layout
+info:
+	@echo "Disk Layout:"
+	@echo "  Sector 0:     Stage 1 bootloader (512 bytes)"
+	@echo "  Sectors 1-$(STAGE2_SECTORS):  Stage 2 bootloader ($$(($(STAGE2_SECTORS) * 512)) bytes)"
+	@echo "  Sectors $$(($(STAGE2_SECTORS) + 1))+: Kernel (up to $$(($(KERNEL_SECTORS) * 512)) bytes)"
+	@echo ""
+	@echo "Update KERNEL_SECTORS if kernel grows beyond $$(($(KERNEL_SECTORS) * 512)) bytes"
+
 # Clean build files
 clean:
-	rm -f $(BOOT_BIN) $(KERNEL_BIN) $(OS_IMAGE) $(BOOT_IMG) *.o
+	rm -f $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN) $(OS_IMAGE) *.o
 
 # Clean VM and disk
 clean-vm:
@@ -111,4 +148,4 @@ clean-vm:
 		$(VBOXMANAGE) unregistervm $(VM_NAME) --delete ) || true
 	rm -f $(DISK_IMAGE)
 
-.PHONY: all run clean clean-vm setup-vm
+.PHONY: all run clean clean-vm setup-vm info
