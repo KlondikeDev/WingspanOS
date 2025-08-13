@@ -17,10 +17,20 @@ void line_completed();
 bool str_equals(const char* str1, const char* str2);
 
 void kmain() {
+    // CRITICAL: Initialize VGA variables FIRST before any printing
+    row = 0;
+    col = 0;
+    
+    // Clear the screen first
+    klear();
+    
+    // Now safe to print
     kprint("Kernel started!\n");
 
+    // Initialize IDT after basic output is working
     idt_init();
 
+    // Initialize ATA/disk
     detect_drives();
 
     kprint("Hello from kMain!\n");
@@ -130,29 +140,28 @@ void kmain() {
                 klfs_create_file(filename);
             } else if (str_equals(command, "touch")) {
                 kprint("Usage: touch <filename>\n");
-            }// Add this to your shell command parsing in kernel.c:
-
-            else if (starts_with(command, "write ")) {
-    // Format: write filename text
-            const char* args = command + 6;
-    
-    // Find first space (separates filename from text)
-            u32 space_pos = 0;
-            while(args[space_pos] && args[space_pos] != ' ') space_pos++;
-    
-            if(args[space_pos] == 0) {
-                kprint("Usage: write <filename> <text>\n");
-            } else {
-        // Extract filename
-                char filename[32] = {0};
-                for(u32 i = 0; i < space_pos && i < 31; i++) {
-                    filename[i] = args[i];
-                }
-        
-        // Text starts after the space
-                const char* text = args + space_pos + 1;
-                klfs_write_file(filename, text);
             }
+            else if (starts_with(command, "write ")) {
+                // Format: write filename text
+                const char* args = command + 6;
+    
+                // Find first space (separates filename from text)
+                u32 space_pos = 0;
+                while(args[space_pos] && args[space_pos] != ' ') space_pos++;
+    
+                if(args[space_pos] == 0) {
+                    kprint("Usage: write <filename> <text>\n");
+                } else {
+                    // Extract filename
+                    char filename[32] = {0};
+                    for(u32 i = 0; i < space_pos && i < 31; i++) {
+                        filename[i] = args[i];
+                    }
+        
+                    // Text starts after the space
+                    const char* text = args + space_pos + 1;
+                    klfs_write_file(filename, text);
+                }
             } else if (starts_with(command, "cat ")) {
                 const char* filename = command + 4;
                 klfs_read_file(filename);
@@ -165,7 +174,7 @@ void kmain() {
                 klfs_delete_file(filename);
             }
             else if (str_equals(command, "rm")) {
-            kprint("Usage: rm <filename>\n");
+                kprint("Usage: rm <filename>\n");
             } else if (starts_with(command, "cp ")) {
                 const char* args = command + 3;
                 u32 space_pos = 0;
@@ -175,12 +184,12 @@ void kmain() {
                     kprint("Usage: cp <source> <dest>\n");
                 } else {
                     char source[32] = {0};
-                for(u32 i = 0; i < space_pos && i < 31; i++) {
-                    source[i] = args[i];
+                    for(u32 i = 0; i < space_pos && i < 31; i++) {
+                        source[i] = args[i];
+                    }
+                    const char* dest = args + space_pos + 1;
+                    klfs_copy_file(source, dest);
                 }
-                const char* dest = args + space_pos + 1;
-                klfs_copy_file(source, dest);
-            }
             } else if (starts_with(command, "find ")) {
                 const char* pattern = command + 5;
                 klfs_find_file(pattern);

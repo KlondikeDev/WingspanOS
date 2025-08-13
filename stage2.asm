@@ -2,6 +2,9 @@
 [BITS 16]
 
 stage2_start:
+    ; Save boot drive passed from stage1
+    mov [boot_drive], dl
+    
     ; Set up stack for Stage 2
     mov ax, 0
     mov ds, ax
@@ -60,16 +63,40 @@ load_kernel:
     mov si, kernel_load_msg
     call print_string
     
+    ; Reset disk system first
+    mov ah, 0               ; Reset disk function
+    mov dl, [boot_drive]    ; Use saved boot drive
+    int 0x13
+    jc .kernel_error        ; If reset fails, error out
+    
     ; Set up for kernel loading
     mov ax, 0
     mov es, ax
     mov bx, 0x1000          ; Load kernel to 0x1000
     
+    ; Read the kernel - it starts at sector 9 (after boot + 8 stage2 sectors)
+    ; Read 18 sectors first (maximum for one track on a floppy)
     mov ah, 2               ; Read sectors
-    mov al, 10              ; Number of sectors
+    mov al, 10              ; Read 10 sectors (9-18)
     mov ch, 0               ; Cylinder 0
-    mov cl, 10              ; Start from sector 10
+    mov cl, 9               ; Start from sector 9 (FIXED: this is where kernel actually starts)
     mov dh, 0               ; Head 0
+    mov dl, [boot_drive]    ; Use saved boot drive
+    
+    int 0x13
+    jc .kernel_error
+    
+    ; Read more sectors from head 1
+    mov ax, 0
+    mov es, ax
+    mov bx, 0x1000 + (10 * 512)  ; Continue after first 10 sectors
+    
+    mov ah, 2               ; Read sectors
+    mov al, 18              ; Read full track
+    mov ch, 0               ; Cylinder 0
+    mov cl, 1               ; Start from sector 1
+    mov dh, 1               ; Head 1 (other side)
+    mov dl, [boot_drive]
     
     int 0x13
     jc .kernel_error
@@ -87,6 +114,10 @@ load_kernel:
     call print_string
     mov al, ah              ; AH contains error code
     call print_hex_byte
+    
+    ; Also print which sector failed
+    mov si, sector_msg
+    call print_string
     
     jmp $
 
@@ -110,6 +141,7 @@ print_hex_digit:
     mov ah, 0x0E
     int 0x10
     ret
+
 enter_protected_mode:
     mov si, pmode_msg
     call print_string
@@ -163,6 +195,10 @@ kernel_load_msg db 'Loading kernel...', 13, 10, 0
 kernel_ok_msg db 'Kernel loaded successfully', 13, 10, 0
 kernel_error_msg db 'Kernel load failed!', 13, 10, 0
 pmode_msg db 'Entering protected mode...', 13, 10, 0
+sector_msg db ' at sector', 13, 10, 0
+
+; Data
+boot_drive db 0
 
 ; GDT setup
 gdt_start:

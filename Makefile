@@ -26,6 +26,8 @@ DISK_IMAGE = kunix_disk.vdi
 # Configuration
 STAGE2_SECTORS = 8
 KERNEL_SECTORS = 64  # Increased from 36 - adjust as needed
+# Standard 1.44MB floppy has 2880 sectors
+FLOPPY_SECTORS = 2880
 
 # Tools
 NASM = nasm
@@ -84,10 +86,10 @@ ata.o: $(ATA_C)
 $(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o $(LINKER_SCRIPT)
 	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o -o $(KERNEL_BIN)
 
-# Create final OS image: Stage1 + Stage2 + Kernel
+# Create final OS image: Stage1 + Stage2 + Kernel (as a proper 1.44MB floppy)
 $(OS_IMAGE): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
-	# Create empty image
-	$(DD) if=/dev/zero of=$(OS_IMAGE) bs=512 count=$$((1 + $(STAGE2_SECTORS) + $(KERNEL_SECTORS))) 2>/dev/null
+	# Create standard 1.44MB floppy image
+	$(DD) if=/dev/zero of=$(OS_IMAGE) bs=512 count=$(FLOPPY_SECTORS) 2>/dev/null
 	
 	# Copy Stage 1 (sector 0)
 	$(DD) if=$(STAGE1_BIN) of=$(OS_IMAGE) bs=512 count=1 conv=notrunc 2>/dev/null
@@ -98,7 +100,7 @@ $(OS_IMAGE): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
 	# Copy Kernel (starts after Stage 2)
 	$(DD) if=$(KERNEL_BIN) of=$(OS_IMAGE) bs=512 seek=$$((1 + $(STAGE2_SECTORS))) conv=notrunc 2>/dev/null
 	
-	@echo "Image created:"
+	@echo "Image created (1.44MB floppy):"
 	@echo "  Stage 1: Sector 0"
 	@echo "  Stage 2: Sectors 1-$(STAGE2_SECTORS)"
 	@echo "  Kernel:  Sectors $$(($(STAGE2_SECTORS) + 1)) onwards"
@@ -129,12 +131,12 @@ run: setup-vm
 
 # Show disk layout
 info:
-	@echo "Disk Layout:"
+	@echo "Disk Layout (1.44MB Floppy):"
 	@echo "  Sector 0:     Stage 1 bootloader (512 bytes)"
 	@echo "  Sectors 1-$(STAGE2_SECTORS):  Stage 2 bootloader ($$(($(STAGE2_SECTORS) * 512)) bytes)"
 	@echo "  Sectors $$(($(STAGE2_SECTORS) + 1))+: Kernel (up to $$(($(KERNEL_SECTORS) * 512)) bytes)"
 	@echo ""
-	@echo "Update KERNEL_SECTORS if kernel grows beyond $$(($(KERNEL_SECTORS) * 512)) bytes"
+	@echo "Total image size: 1.44MB ($(FLOPPY_SECTORS) sectors)"
 
 # Clean build files
 clean:
