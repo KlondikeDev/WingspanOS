@@ -154,4 +154,4 @@ clean-vm:
 		$(VBOXMANAGE) unregistervm $(VM_NAME) --delete ) || true
 	rm -f $(DISK_IMAGE)
 
-.PHONY: all run clean clean-vm setup-vm info
+.PHONY: all run clean clean-vm setup-vm infoFilename (null-terminated)

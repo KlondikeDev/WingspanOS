@@ -12,127 +12,49 @@ stage2_start:
     mov ss, ax
     mov sp, 0x7C00
     
-    ; Print Stage 2 loaded message
-    mov si, stage2_msg
+    ; Print boot drive immediately so we can see DL (0x00 floppy, 0x80 HDD)
+    mov si, boot_drive_msg
     call print_string
-    
-    ; Load kernel from disk
-    call load_kernel
-    
-    ; Set up GDT and enter protected mode
-    call enter_protected_mode
+    mov al, [boot_drive]
+    call print_hex_byte
+    mov si, newline
+    call print_string
+
+    ; Jump past utility function definitions to runtime start
+    jmp after_funcs
 
 load_kernel:
     mov si, kernel_load_msg
     call print_string
-    
+
     ; Reset disk system
     xor ax, ax
     mov dl, [boot_drive]
     int 0x13
-    jc .kernel_error
-    
+    jc kernel_error
+
     ; We'll load the kernel in smaller chunks to avoid BIOS limitations
     ; Start loading at 0x1000
     mov ax, 0x0100
     mov es, ax
     xor bx, bx              ; ES:BX = 0x0100:0x0000 = 0x1000
-    
+
     ; Kernel starts at sector 9 (after stage2)
     mov byte [current_sector], 9
     mov byte [current_head], 0
     mov byte [current_cylinder], 0
     mov word [sectors_loaded], 0
-    
+
 .load_loop:
     ; Check if we've loaded enough (64 sectors)
     cmp word [sectors_loaded], 64
     jae .done_loading
-    
-    ; Calculate how many sectors to read (max 9 at a time to be safe)
-    mov ax, 64
-    sub ax, [sectors_loaded]
-    cmp ax, 9
-    jbe .use_remaining
-    mov ax, 9
-.use_remaining:
-    mov [sectors_to_read], al
-    
-    ; Read sectors
-    mov ah, 0x02            ; Read function
-    mov al, [sectors_to_read]
-    mov ch, [current_cylinder]
-    mov cl, [current_sector]
-    mov dh, [current_head]
-    mov dl, [boot_drive]
-    
-    int 0x13
-    jc .kernel_error
-    
-    ; Update loaded count
-    movzx ax, byte [sectors_to_read]
-    add [sectors_loaded], ax
-    
-    ; Update buffer pointer (sectors_to_read * 512 bytes)
-    mov ax, [sectors_to_read]
-    mov cx, 512
-    mul cx                  ; DX:AX = sectors * 512
-    add bx, ax
-    jnc .no_segment_wrap
-    
-    ; Handle segment wrap
-    mov ax, es
-    add ax, 0x1000          ; Advance by 64KB
-    mov es, ax
-    xor bx, bx
-    
-.no_segment_wrap:
-    ; Update CHS for next read
-    movzx ax, byte [sectors_to_read]
-    add [current_sector], al
-    
-    ; Check if we need to go to next head/cylinder
-    cmp byte [current_sector], 19  ; Sectors are 1-18
-    jb .load_loop
-    
-    ; Move to next head
-    mov byte [current_sector], 1
-    inc byte [current_head]
-    cmp byte [current_head], 2
-    jb .load_loop
-    
-    ; Move to next cylinder
-    mov byte [current_head], 0
-    inc byte [current_cylinder]
-    jmp .load_loop
 
-.done_loading:
-    mov si, kernel_ok_msg
-    call print_string
-    
-    ; Show how many sectors we loaded
-    mov si, sectors_loaded_msg
-    call print_string
-    mov ax, [sectors_loaded]
-    call print_dec
-    mov si, newline
-    call print_string
-    ret
-    
-.kernel_error:
-    mov si, kernel_error_msg
-    call print_string
-    
-    ; Print error code
-    push ax
-    mov si, error_code_msg
-    call print_string
-    pop ax
-    mov al, ah
-    call print_hex_byte
-    
-    ; Print where it failed
-    mov si, failed_at_msg
+    ; Read one sector at a time (safe CHS handling)
+    mov byte [sectors_to_read], 1
+
+    ; Debug: print CHS and count
+    mov si, chs_msg
     call print_string
     mov al, [current_cylinder]
     call print_hex_byte
@@ -146,34 +68,89 @@ load_kernel:
     int 0x10
     mov al, [current_sector]
     call print_hex_byte
-    
-    jmp $
+    mov si, count_msg
+    call print_string
+    movzx ax, byte [sectors_to_read]
+    call print_dec
+    mov si, newline
+    call print_string
 
+    ; Read sectors
+    mov ah, 0x02            ; Read function
+    mov al, [sectors_to_read]
+    mov ch, [current_cylinder]
+    mov cl, [current_sector]
+    mov dh, [current_head]
+    mov dl, [boot_drive]
+    int 0x13
+    jc kernel_error
+
+    ; Update loaded count
+    movzx ax, byte [sectors_to_read]
+    add [sectors_loaded], ax
+
+    ; Update buffer pointer (sectors_to_read * 512 bytes)
+    movzx ax, byte [sectors_to_read]
+    mov cx, 512
+    mul cx                  ; DX:AX = sectors * 512
+    add bx, ax
+    jnc .no_segment_wrap
+    ; Handle segment wrap (BX overflow)
+    mov ax, es
+    add ax, 0x1000          ; Advance by 64KB
+    mov es, ax
+    xor bx, bx
+.no_segment_wrap:
+    ; Increment sector by 1 and handle wrap
+    inc byte [current_sector]
+    cmp byte [current_sector], 19
+    jb .load_loop
+    mov byte [current_sector], 1
+    inc byte [current_head]
+    cmp byte [current_head], 2
+    jb .load_loop
+    mov byte [current_head], 0
+    inc byte [current_cylinder]
+    jmp .load_loop
+
+.done_loading:
+    mov si, kernel_ok_msg
+    call print_string
+    mov si, sectors_loaded_msg
+    call print_string
+    mov ax, [sectors_loaded]
+    call print_dec
+    mov si, newline
+    call print_string
+    ; Indicate load complete
+    mov si, load_complete_msg
+    call print_string
+    mov si, newline
+    call print_string
+    ret
+
+; Utility functions (moved above usage)
 print_dec:
     ; Simple decimal print for AX
     push ax
     push bx
     push cx
     push dx
-    
     mov bx, 10
     xor cx, cx
-    
-.push_digits:
+push_digits:
     xor dx, dx
     div bx
     push dx
     inc cx
     test ax, ax
-    jnz .push_digits
-    
-.pop_digits:
+    jnz push_digits
+pop_digits:
     pop ax
     add al, '0'
     mov ah, 0x0E
     int 0x10
-    loop .pop_digits
-    
+    loop pop_digits
     pop dx
     pop cx
     pop bx
@@ -192,12 +169,32 @@ print_hex_byte:
 print_hex_digit:
     add al, '0'
     cmp al, '9'
-    jle .print
+    jle print_digit
     add al, 7
-.print:
+print_digit:
     mov ah, 0x0E
     int 0x10
     ret
+; ...existing code...
+
+after_funcs:
+    ; Print Stage 2 loaded message
+    mov si, stage2_msg
+    call print_string
+
+    ; Print saved boot drive (DL)
+    mov si, boot_drive_msg
+    call print_string
+    mov al, [boot_drive]
+    call print_hex_byte
+    mov si, newline
+    call print_string
+
+    ; Continue to load the kernel
+    call load_kernel
+    
+    ; Enter protected mode and jump to kernel
+    call enter_protected_mode
 
 enter_protected_mode:
     mov si, pmode_msg
@@ -228,7 +225,8 @@ protected_mode_start:
     mov esp, 0x90000
     
     ; Jump to kernel
-    jmp 0x1000
+        ; Far jump to kernel entry (set CS)
+        jmp 0x08:0x1000
 
 [BITS 16]
 ; Utility functions
@@ -260,9 +258,37 @@ pmode_msg db 'Entering protected mode...', 13, 10, 0
 error_code_msg db ' Error: ', 0
 failed_at_msg db ' at CHS: ', 0
 sectors_loaded_msg db 'Sectors loaded: ', 0
+chs_msg db 'CHS: ', 0
+count_msg db ' Count: ', 0
 newline db 13, 10, 0
+boot_drive_msg db 'Boot drive: ', 0
+load_complete_msg db 'Load complete, entering protected mode...', 13,10,0
 
 ; GDT setup
+
+kernel_error:
+    mov si, kernel_error_msg
+    call print_string
+    ; Print error code (AH)
+    mov al, ah
+    call print_hex_byte
+    ; Print where it failed
+    mov si, failed_at_msg
+    call print_string
+    mov al, [current_cylinder]
+    call print_hex_byte
+    mov al, '/'
+    mov ah, 0x0E
+    int 0x10
+    mov al, [current_head]
+    call print_hex_byte
+    mov al, '/'
+    mov ah, 0x0E
+    int 0x10
+    mov al, [current_sector]
+    call print_hex_byte
+    jmp $
+
 align 8
 gdt_start:
     dd 0x0, 0x0             ; Null descriptor

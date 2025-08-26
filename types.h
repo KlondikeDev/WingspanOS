@@ -1,7 +1,7 @@
 /*
     File: types.h
     Created on: August 7th 2025
-    Created by: jjones
+    Created by: jjones (GitHub Username: KlondikeDev)
     Purpose: To introduce the variable types lost by
     the removal of the C standard library.
     Dependencies: None (Foundational Header)
