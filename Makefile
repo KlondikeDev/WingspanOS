@@ -12,6 +12,7 @@ ISR_ASM = isr.asm
 KUTILS_C = kutils.c
 MUSIC_C = music.c
 ATA_C = ata.c
+KERNEL_ENTRY_ASM = kernel_entry.asm
 LINKER_SCRIPT = linker.ld
 
 # Output files
@@ -81,10 +82,13 @@ music.o: $(MUSIC_C)
 
 ata.o: $(ATA_C)
 	$(GCC) $(CFLAGS) $(ATA_C) -o ata.o
+# Add this rule after the other .o rules:
+kernel_entry.o: $(KERNEL_ENTRY_ASM)
+	$(NASM) -f elf32 $(KERNEL_ENTRY_ASM) -o kernel_entry.o
 
 # Link kernel
-$(KERNEL_BIN): kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o $(LINKER_SCRIPT)
-	$(LD) $(LDFLAGS) kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o -o $(KERNEL_BIN)
+$(KERNEL_BIN): kernel_entry.o kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o $(LINKER_SCRIPT)
+	$(LD) $(LDFLAGS) kernel_entry.o kernel.o vga.o idt.o isr.o keyboard.o kutils.o music.o ata.o -o $(KERNEL_BIN)
 
 # Create final OS image: Stage1 + Stage2 + Kernel (as a proper 1.44MB floppy)
 $(OS_IMAGE): $(STAGE1_BIN) $(STAGE2_BIN) $(KERNEL_BIN)
