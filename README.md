@@ -1,6 +1,7 @@
 # WingspanOS
+## *Freedom to Build*
 
-A lightweight, educational 32-bit operating system built from scratch.
+A lightweight, educational 32-bit operating system built from scratch. Designed to be expanded upon, provides a minimal bootloader and kernel.
 
 ## Features
 
