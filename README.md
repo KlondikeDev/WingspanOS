@@ -42,6 +42,8 @@ WingspanOS is designed to be expanded upon, and provides a minimal starting poin
 
 Apache License 2.0 - Use freely with attribution required.
 
+All versions of WingspanOS, past and present, are released under Apache License 2.0.
+
 ---
 
 *Copyright (C) 2025 Joseph Jones (KlondikeDev)*

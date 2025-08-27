@@ -26,6 +26,12 @@
 
 */
 
+/*
+ * KLFS (Klondike Little Filesystem) and KFS (Klondike Filesystem) 
+ * Created by Joseph Jones (KlondikeDev)
+ * Original implementation and design
+ */
+
 #include "types.h"
 #include "vga.h"
 #include "idt.h"
