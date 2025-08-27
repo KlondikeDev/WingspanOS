@@ -1,4 +1,14 @@
-# Two-Stage Bootloader Makefile
+#
+#    File: Makefile
+#    Created on: August 7th 2025
+#    Created by: jjones (GitHub Username: KlondikeDev)
+#    Purpose: To build the OS.
+#    Dependencies: None (Incompatible with includes, and doesn't need them)
+#
+#    Suggested Changes/Todo:
+#    Just for when extra files are added.
+#
+#
 # NOTE: All indented lines MUST use TAB characters, not spaces!
 
 # Source files
@@ -20,9 +30,9 @@ STAGE1_BIN = stage1.bin
 STAGE2_BIN = stage2.bin
 KERNEL_BIN = kernel.bin
 OS_IMAGE = os.img
-VM_NAME = Kunix
+VM_NAME = WingspanOS
 DISK_SIZE = 100
-DISK_IMAGE = kunix_disk.vdi
+DISK_IMAGE = wingspan_disk.vdi
 
 # Configuration
 STAGE2_SECTORS = 8

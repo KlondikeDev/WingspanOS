@@ -1,3 +1,15 @@
+;
+;   File: boot.asm
+;   Created on: August 7th 2025
+;   Created by: jjones (GitHub Username: KlondikeDev)
+;   Purpose: To boot the OS.
+;   Dependencies: None (First Stage Bootloader)
+;    
+;   Suggested Changes/Todo:
+;   Nothing to do.
+;
+;
+
 [ORG 0x7C00]
 [BITS 16]
 
@@ -18,7 +30,6 @@ _start:
     mov ch, 0        ; Cylinder 0
     mov cl, 2        ; Start from sector 2 (sector 1 is this bootloader)
     mov dh, 0        ; Head 0
-    mov dl, 0        ; Drive 0 (floppy) - ADD THIS LINE
     int 0x13         ; Call BIOS
     jc disk_error    ; Jump if carry flag set (error)
     

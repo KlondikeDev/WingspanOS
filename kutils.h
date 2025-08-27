@@ -1,3 +1,15 @@
+/*
+    File: kutils.h
+    Created on: August 8th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: The header file for kutils.
+    Dependencies: types.h, idt.h
+
+    Suggested Changes/Todo:
+    Anything, it's just a place to store functions.
+
+*/
+
 #pragma once
 
 #include "types.h"

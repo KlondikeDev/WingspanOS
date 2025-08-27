@@ -1,3 +1,15 @@
+/*
+    File: vga.h
+    Created on: August 9th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: Header file for vga text printing functionality.
+    Dependencies: types.h, vga.h, idt.h
+
+    Suggested Changes/Todo:
+    Nothing to do.
+
+*/
+
 #ifndef VGA_H
 #define VGA_H
 #include "types.h"

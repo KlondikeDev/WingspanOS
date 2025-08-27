@@ -1,3 +1,15 @@
+;
+;   File: kernel_entry.asm
+;   Created on: August 10th 2025
+;   Created by: jjones (GitHub Username: KlondikeDev)
+;   Purpose: To setup the kernel entry point.
+;   Dependencies: None (Needs the bootloader, but that should be obvious.)
+;    
+;   Suggested Changes/Todo:
+;   Nothing to do.
+;
+;
+
 [BITS 32]
 [EXTERN kmain]
 

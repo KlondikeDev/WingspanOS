@@ -1,3 +1,15 @@
+;
+;   File: isr.asm
+;   Created on: August 8th 2025
+;   Created by: jjones (GitHub Username: KlondikeDev)
+;   Purpose: Set up interrupt service routines (ISRs) for CPU exceptions and hardware interrupts.
+;   Dependencies: None (None apparent, anyway. Still needs the IDT and GDT. Duh.)
+;    
+;   Suggested Changes/Todo:
+;   Nothing to do.
+;
+;
+
 [BITS 32]
 
 ;=============================================================================

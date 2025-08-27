@@ -1,3 +1,15 @@
+/*
+    File: ata.c
+    Created on: August 10th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: To setup ATA disk drivers.
+    Dependencies: types.h, vga.h, idt.h, kutils.h
+
+    Suggested Changes/Todo:
+    Nothing to do.
+
+*/
+
 #include "types.h"
 #include "vga.h"
 #include "idt.h"
@@ -546,6 +558,9 @@ bool klfs_copy_file(const char* source, const char* dest) {
     }
     
     // Write to destination
+    // Ensure buffer is null-terminated so klfs_write_file (which uses strlen)
+    // measures the correct length and doesn't read past the copied data.
+    file_data[source_file->size] = '\0';
     if(!klfs_write_file(dest, (char*)file_data)) {
         return false;
     }

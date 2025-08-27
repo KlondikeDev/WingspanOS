@@ -1,3 +1,15 @@
+/*
+    File: music.c
+    Created on: August 9th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: Fun? Just adds some fun music abilities using the PC speaker.
+    Dependencies: types.h, vga.h, idt.h, kutils.h
+
+    Suggested Changes/Todo:
+    Anything! Just have fun with it.
+
+*/
+
 #include "types.h"
 #include "vga.h"
 #include "idt.h"

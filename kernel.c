@@ -1,3 +1,16 @@
+/*
+    File: kernel.c
+    Created on: August 7th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: To setup the kernel of WingspanOS.
+    Dependencies: types.h, vga.h, idt.h, kutils.h, music.h, ata.h
+
+    Suggested Changes/Todo:
+    Anything! The kernel in this case, IS THE OS.
+
+*/
+
+
 #include "types.h"
 #include "vga.h"
 #include "idt.h"
@@ -33,10 +46,12 @@ void kmain() {
     // Initialize ATA/disk
     detect_drives();
 
-    kprint("Hello from kMain!\n");
-    kprint("Copyright (C) Joseph Jones // Klondike Software\n");
-
-    kprint("kunix-$ ");
+    kprint("Copyright (C) 2025 Joseph Jones (KlondikeDev)\n");
+    kprint("Licensed under Apache License 2.0\n\n");
+    kprint("===========================================\n");
+    kprint("     W I N G S P A N   O S   v0.1         \n");
+    kprint("===========================================\n");
+    kprint("wingspan-$ ");
     update_cursor(row, col);
     input_start_row = row;
     input_start_col = col;
@@ -56,7 +71,8 @@ void kmain() {
                 kprint("Available commands:\n");
                 kprint("| UTILITIES:\n");
                 kprint("| GENERAL:    help, wash, about, reboot, rtc\n");
-                kprint("| FILESYSTEM: drives, format, diskinfo, verify, ls, touch, cat, write, rm, cp, find\n");
+                kprint("| FILESYSTEM: drives, format, diskinfo, verify, ls, touch, cat, write, \n");
+                kprint("|             rm, cp, find\n");
                 kprint("|_\n");
                 kprint("MISC: echo, play\n");
             }
@@ -66,7 +82,7 @@ void kmain() {
                 col = 0;
             }
             else if (str_equals(command, "about")) {
-                kprint("Kunix v0.0.1-a\n");
+                kprint("WingspanOS\n");
             }
             else if (starts_with(command, "echo ")) {
                 kprint(command + 5);
@@ -199,7 +215,7 @@ void kmain() {
 
             input_pos = 0;
             line_ready = false;
-            kprint("kunix-$ ");
+            kprint("wingspan-$ ");
             input_start_row = row;
             input_start_col = col;
             update_cursor(row, col);

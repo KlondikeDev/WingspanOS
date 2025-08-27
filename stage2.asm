@@ -1,3 +1,16 @@
+;
+;   File: stage2.asm
+;   Created on: August 7th 2025
+;   Created by: jjones (GitHub Username: KlondikeDev)
+;   Purpose: To boot the OS. (Bootloader stage 2)
+;   Dependencies: None (Second Stage Bootloader, so it needs the first stage. But if you didn't know that, maybe read about OSes first?)
+;
+;   Suggested Changes/Todo:
+;   Nothing to do, unless the kernel gets too big.
+;
+;
+
+
 [ORG 0x8000]
 [BITS 16]
 
@@ -39,15 +52,33 @@ load_kernel:
     mov es, ax
     xor bx, bx              ; ES:BX = 0x0100:0x0000 = 0x1000
 
-    ; Kernel starts at sector 9 (after stage2)
-    mov byte [current_sector], 9
+    ; Kernel starts at sector 10 (after stage2) 
+    mov byte [current_sector], 10
     mov byte [current_head], 0
     mov byte [current_cylinder], 0
     mov word [sectors_loaded], 0
 
+    ; DEBUG: Print INITIAL values before any loading
+    mov si, initial_chs_msg
+    call print_string
+    mov al, [current_cylinder]
+    call print_hex_byte
+    mov al, '/'
+    mov ah, 0x0E
+    int 0x10
+    mov al, [current_head] 
+    call print_hex_byte
+    mov al, '/'
+    mov ah, 0x0E
+    int 0x10
+    mov al, [current_sector]
+    call print_hex_byte
+    mov si, newline
+    call print_string
+
 .load_loop:
-    ; Check if we've loaded enough (64 sectors)
-    cmp word [sectors_loaded], 64
+    ; Check if we've loaded enough (48 sectors - kernel needs more than 36)
+    cmp word [sectors_loaded], 48
     jae .done_loading
 
     ; Read one sector at a time (safe CHS handling)
@@ -175,7 +206,6 @@ print_digit:
     mov ah, 0x0E
     int 0x10
     ret
-; ...existing code...
 
 after_funcs:
     ; Print Stage 2 loaded message
@@ -263,6 +293,7 @@ count_msg db ' Count: ', 0
 newline db 13, 10, 0
 boot_drive_msg db 'Boot drive: ', 0
 load_complete_msg db 'Load complete, entering protected mode...', 13,10,0
+initial_chs_msg db 'INITIAL CHS: ', 0
 
 ; GDT setup
 

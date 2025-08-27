@@ -1,3 +1,16 @@
+/*
+    File: kutils.c
+    Created on: August 8th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: To setup utility functions for the OS.
+    Dependencies: types.h, vga.h, idt.h, kutils.h
+
+    Suggested Changes/Todo:
+    Anything, it's just a place to store functions.
+
+*/
+
+
 #include "idt.h"
 #include "vga.h"
 #include "types.h"

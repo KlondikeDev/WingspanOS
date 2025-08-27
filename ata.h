@@ -1,3 +1,14 @@
+/*
+    File: ata.h
+    Created on: August 10th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: Header file for ATA disk drivers.
+    Dependencies: types.h
+    Suggested Changes/Todo:
+    Add comments.
+
+*/
+
 #pragma once
 #include "types.h"
 

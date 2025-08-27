@@ -1,7 +1,7 @@
 /*
-    File: idt.h
+    File: idt.c
     Created on: August 8th 2025
-    Created by: jjones
+    Created by: jjones (GitHub Username: KlondikeDev)
     Purpose: Interrupt Descriptor Table.
     Dependencies: types.h, idt.h, vga.h, kutils.h
 

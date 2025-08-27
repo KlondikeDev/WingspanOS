@@ -1,3 +1,15 @@
+/*
+    File: vga.c
+    Created on: August 8th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: Adds vga text printing functionality.
+    Dependencies: types.h, vga.h, idt.h
+
+    Suggested Changes/Todo:
+    Nothing to do.
+
+*/
+
 #include "types.h"
 #include "vga.h"
 #include "idt.h"

@@ -1,3 +1,16 @@
+/*
+    File: keyboard.c
+    Created on: August 8th 2025
+    Created by: jjones (GitHub Username: KlondikeDev)
+    Purpose: To setup keyboard input handling.
+    Dependencies: types.h, vga.h, idt.h, kutils.h
+
+    Suggested Changes/Todo:
+    Nothing to do.
+
+*/
+
+
 #include "types.h"
 #include "idt.h"
 #include "vga.h"
