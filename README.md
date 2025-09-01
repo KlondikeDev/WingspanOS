@@ -29,8 +29,8 @@ A lightweight, educational 32-bit operating system built from scratch. Designed 
 
 ### Build & Run
 ```bash
-make                    # Build OS image
-make run                # Run in VirtualBox
+make                          # Build OS image
+make run                      # Run in VirtualBox
 qemu-system-i386 -fda os.img  # Run in QEMU
 ```
 
