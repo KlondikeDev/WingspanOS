@@ -18,7 +18,7 @@ A lightweight, educational 32-bit operating system built from scratch. Designed 
 - **ATA driver** for disk I/O
 - **PC speaker sound support**
 - **Real-time clock integration**
-- **Apache 2.0 licensed** - Free for educational and commercial use
+- **GPL v3 licensed** - Free and open source
 
 ## Quick Start
 
@@ -47,9 +47,9 @@ WingspanOS is designed to be expanded upon, and provides a minimal starting poin
 
 ## License
 
-Apache License 2.0 - Use freely with attribution required.
+GNU General Public License v3.0 - Free and open source software.
 
-All versions of WingspanOS, past and present, are released under Apache License 2.0.
+WingspanOS v1.0 and all future versions are released under GPL v3.
 
 ---
 
