@@ -29,7 +29,11 @@
 #include "types.h"
 #include "vga.h"
 #include "idt.h"
+#include "kutils.h"
+
 u16 row = 0, col = 0;
+u16 input_start_row = 0;
+u16 input_start_col = 0;
 
 void scroll_screen() {
     u16* VGA_MEMORY = (u16*) (0xB8000);
@@ -113,20 +117,32 @@ void kprint_hex(u8 value) {
 void kprint_dec(u32 num) {
     char buffer[12];  // Enough for 32-bit number
     int i = 0;
-    
+
     if(num == 0) {
         kprint("0");
         return;
     }
-    
+
     while(num > 0) {
         buffer[i++] = '0' + (num % 10);
         num /= 10;
     }
-    
+
     // Print in reverse
     while(--i >= 0) {
         char str[2] = {buffer[i], '\0'};
         kprint(str);
     }
+}
+
+void update_cursor(u16 row, u16 col) {
+    u16 pos = row * 80 + col;
+
+    // Send high byte
+    outb(0x3D4, 14);
+    outb(0x3D5, (pos >> 8) & 0xFF);
+
+    // Send low byte
+    outb(0x3D4, 15);
+    outb(0x3D5, pos & 0xFF);
 }
